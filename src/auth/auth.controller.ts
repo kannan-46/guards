@@ -9,7 +9,7 @@ export class AuthController {
 
     @Post('register')
     async register(@Body() dto:createUser){
-        return this.auth.regitser(dto)
+        return this.auth.register(dto)
     }
 
     @Post('login')

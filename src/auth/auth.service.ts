@@ -16,7 +16,7 @@ export class AuthService {
     private readonly jwt: JwtService,
   ) {}
 
-  async regitser(dto: createUser) {
+  async register(dto: createUser) {
     const hashed = await bcrypt.hash(dto.password, 10);
 
     const newUser = await this.user.createUser({
