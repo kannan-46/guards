@@ -4,6 +4,7 @@ import {
   GetCommand,
   PutCommand,
   QueryCommand,
+  UpdateCommand,
 } from '@aws-sdk/lib-dynamodb';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { v4 as uuid } from 'uuid';
@@ -68,15 +69,34 @@ export class DynamoService {
     return res.Items || [];
   }
 
-  async getChat(userId:string,chatId:string){
-    const res=await this.client.send(new GetCommand({
-      TableName:'bot',
-      Key:{
-        PK:`USER#${userId}`,
-        SK:`CHAT#${chatId}`
-      }
-    }))
-    return res.Item
+  async getChat(userId: string, chatId: string) {
+    const res = await this.client.send(
+      new GetCommand({
+        TableName: 'bot',
+        Key: {
+          PK: `USER#${userId}`,
+          SK: `CHAT#${chatId}`,
+        },
+      }),
+    );
+    return res.Item;
+  }
+
+  async updateChatTitle(userId: string, chatId: string, newTitle: string) {
+    const res = await this.client.send(
+      new UpdateCommand({
+        TableName: 'bot',
+        Key: {
+          PK: `USER#${userId}`,
+          SK: `CHAT#${chatId}`,
+        },
+        UpdateExpression: 'SET title = :title, lastMessageAt = :now',
+        ExpressionAttributeValues: {
+          ':title': newTitle,
+          ':now': new Date().toISOString(),
+        },
+      }),
+    );
   }
 
   //MESSAGE
@@ -117,4 +137,4 @@ export class DynamoService {
     );
     return res.Items || [];
   }
-} 
+}

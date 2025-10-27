@@ -16,8 +16,8 @@ export class GeminiService {
   async *generateTextStream(
     prompt: string,
     history: Content[],
-    temperature: number = 0.7,
-    webSearch: boolean = false,
+    temperature: number,
+    webSearch: boolean,
   ): AsyncGenerator<string> {
     const systemInstruction = `You are a large language model built by Google. Your name is Gemini.
 Carefully heed the user's instructions.
