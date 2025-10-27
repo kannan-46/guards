@@ -99,6 +99,19 @@ export class DynamoService {
     );
   }
 
+
+  async getUserChatList(userId:string){
+    const res=await this.client.send(new QueryCommand({
+      TableName:'bot',
+      KeyConditionExpression:'PK = :pk AND begins_with(SK, :sk)',
+      ExpressionAttributeValues:{
+        ':pk':`USER#${userId}`,
+        ':sk':'CHAT#'
+      },
+      ScanIndexForward:false
+    }))
+    return res.Items||[]
+  }
   //MESSAGE
   async saveChatMessage(
     userId: string,
@@ -133,6 +146,7 @@ export class DynamoService {
           ':pk': `USER#${userId}`,
           ':sk': `CHAT#${chatId}#MSG#`,
         },
+        ScanIndexForward:true
       }),
     );
     return res.Items || [];

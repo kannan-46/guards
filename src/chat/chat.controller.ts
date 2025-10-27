@@ -12,7 +12,7 @@ import { AuthGuard } from 'src/auth/auth.guard';
 import { ChatService } from './chat.service';
 import { SendMessageDto } from 'src/dto/sendMessage.dto';
 import { Request } from 'express';
-import { map } from 'rxjs';
+import { map ,from} from 'rxjs';
 import { DynamoService } from 'src/dynamo/dynamo.service';
 
 @UseGuards(AuthGuard)
@@ -25,9 +25,9 @@ export class ChatController {
 
   @Post('stream')
   @Sse()
-  async sendMessageStream(@Body() dto: SendMessageDto, @Req() req: any) {
+   sendMessageStream(@Body() dto: SendMessageDto, @Req() req: any) {
     const userId = req.user.sub;
-    const stream = await this.chat.generateStreamWithHistory(
+    const stream =  this.chat.generateStreamWithHistory(
       dto.prompt,
       userId,
       dto.chatId,
@@ -36,7 +36,7 @@ export class ChatController {
     );
     return from(stream).pipe(
       map((chunk: string) => {
-        return new MessageEvent('message', { data: { chunk } });
+        return {data:chunk}
       }),
     );
   }
@@ -44,7 +44,7 @@ export class ChatController {
   @Get('history')
   async getChatHistory(@Req() req: any) {
     const userId = req.user.sub;
-    return this.client.getUserChats(userId, chatId);
+    return this.client.getUserChatList(userId);
   }
 
   @Get('history/:chatId')

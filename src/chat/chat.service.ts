@@ -1,5 +1,6 @@
 import { Content } from '@google/generative-ai';
 import { Injectable } from '@nestjs/common';
+import { json } from 'express';
 import { DynamoService } from 'src/dynamo/dynamo.service';
 import { GeminiService } from 'src/gemini/gemini.service';
 
@@ -19,27 +20,44 @@ export class ChatService {
   async *generateStreamWithHistory(
     prompt: string,
     userId: string,
-    chatId: string,
-    websearch: boolean,
-    temperature: number,
+    chatId: string | undefined,
+    websearch: boolean|undefined,
+    temperature: number|undefined,
   ): AsyncGenerator<string> {
     try {
-      const chatMessages = await this.client.getChatMessage(userId, chatId);
-      console.log(`Retrieved ${chatMessages.length} for chatId ${chatId}`);
+      let currentChatId = chatId;
+
+      if (!currentChatId) {
+        const title = prompt.slice(0, 20) + '...';
+        const newChat = await this.client.createChat(userId, title);
+        currentChatId = newChat.chatId;
+        console.log(`created new chat with id: ${currentChatId}`);
+        yield JSON.stringify({ newChatId: currentChatId });
+      }
+
+      const chatMessages = await this.client.getChatMessage(
+        userId,
+        currentChatId,
+      );
+      console.log(
+        `Retrieved ${chatMessages.length} for chatId ${currentChatId}`,
+      );
 
       const history: Content[] = chatMessages.slice(-20).map((item) => ({
         role: item.role as 'user' | 'model',
         parts: [{ text: item.content }],
       }));
 
-      await this.client.saveChatMessage(userId, chatId, 'user', prompt);
+      await this.client.saveChatMessage(userId, currentChatId, 'user', prompt);
       console.log('user message saved to DB');
 
+      const finalWebSearch=websearch??false
+      const finalTemperature=temperature??0.5
       const stream = this.gemini.generateTextStream(
         prompt,
         history,
-        temperature,
-        websearch,
+        finalTemperature,
+        finalWebSearch,
       );
       let fullResponse = '';
       for await (const chunk of stream) {
@@ -49,7 +67,7 @@ export class ChatService {
       if (fullResponse.trim()) {
         await this.client.saveChatMessage(
           userId,
-          chatId,
+          currentChatId,
           'model',
           fullResponse.trim(),
         );

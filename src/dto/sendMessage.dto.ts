@@ -14,9 +14,7 @@ export class SendMessageDto {
   @IsNotEmpty()
   prompt: string;
 
-  @IsUUID()
-  @IsOptional()
-  userId?: string;
+
 
   @IsUUID()
   @IsOptional()
